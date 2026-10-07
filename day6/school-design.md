@@ -1,29 +1,31 @@
-# School Database Design & Architecture
+```markdown
+# School Database Design
 
-## 1. Table Descriptions & Entities
+## Students Table
 
-- **`students`**: Stores core information about registered students (Primary Key: `student_id`). Contains a `UNIQUE` constraint on `email` to prevent duplicate student accounts.
-- **`courses`**: Stores course metadata and unique course identifiers (Primary Key: `course_id`). Contains a `UNIQUE` constraint on `course_code`.
-- **`enrolments`**: Serves as a bridge/join table linking students to courses (Primary Key: `enrolment_id`). It holds interaction-specific attributes like `grade` and enrollment timestamps (`enrolled_at`).
+The `students` table stores information about each student. It contains the student's unique ID, name and email address. The `id` column is the primary key, which uniquely identifies each student. The email is also required to be unique so that two students cannot register with the same email address.
 
-## 2. Database Relationships & Join Table Explanation
+## Courses Table
 
-- **One-to-Many ($1:N$) Relationships**:
-  - One student can have **many** enrolments.
-  - One course can have **many** enrolments.
-- **Many-to-Many ($M:N$) Relationship**:
-  - The relationship between `students` and `courses` is inherently **Many-to-Many** because a single student can take multiple courses, and a single course contains multiple students.
-- **Why a Join Table is Needed**:
-  - Relational databases cannot directly store arrays or list references across tables without violating First Normal Form (1NF). The `enrolments` join table decomposes the $M:N$ relationship into two $1:N$ relationships using Foreign Keys (`student_id`, `course_id`).
-  - It allows attributes specific to the enrollment event (such as `grade`) to be tracked cleanly over time without duplicating course or student details.
-  - Defining a composite unique constraint `UNIQUE(student_id, course_id)` on the join table acts as a crucial database safeguard against duplicate course enrollments.
+The `courses` table stores information about the courses offered by the school. It contains a unique course ID, the course name and a unique course code. The `id` column is the primary key, while the course code is also unique so that each course can be identified clearly.
 
-## 3. Database Indexing Strategy
+## Enrolments Table
 
-While defining `UNIQUE` constraints on `students(email)` automatically creates an index in database engines like SQLite and PostgreSQL for user authentication lookups, secondary indexes are vital for relational performance:
+The `enrolments` table records the fact that a student has enrolled on a particular course. It contains its own primary key, a `student_id`, a `course_id` and the student's grade for that course. The `student_id` and `course_id` columns are foreign keys that connect the enrolments table to the students and courses tables.
 
-- **Indexes to Add**:
-  ```sql
-  CREATE INDEX idx_enrolments_student_id ON enrolments(student_id);
-  CREATE INDEX idx_enrolments_course_id ON enrolments(course_id);
-  ```
+## Relationships
+
+There is a one-to-many relationship between students and enrolments. One student can have many enrolments, but each enrolment belongs to one student.
+
+There is also a one-to-many relationship between courses and enrolments. One course can have many enrolments, but each enrolment belongs to one course.
+
+Students and courses therefore have a many-to-many relationship. One student can enrol in many courses, and one course can have many students. The `enrolments` table is needed as a join table because it connects students and courses and also stores information specific to the relationship, such as the student's grade. The `UNIQUE (student_id, course_id)` constraint prevents the same student from enrolling in the same course more than once.
+
+## Index
+
+I would add an index on `enrolments(student_id)` because student enrolment information will often be searched using the student's ID. An index can make these lookups faster, especially as the number of students and enrolments grows.
+
+## SQL or NoSQL?
+
+I would choose SQL for this school system because the data has clear relationships between students, courses and enrolments. The system needs primary keys, foreign keys, unique constraints, joins, grouping and reliable relationships between records. SQL databases are well suited to structured data and transactions where data consistency is important. A NoSQL database could work for a much larger or less structured system, but for this school database, a relational SQL database is the more appropriate choice.
+```
